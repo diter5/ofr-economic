@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OFR | economic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            user-drag: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Comfortaa', cursive;
+            background-color: #051a10; /* Тёмно-зелёный фон */
+            color: #ccff99;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #effect-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .nav-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+        }
+
+        .nav-item {
+            padding: 10px 20px;
+            background: rgba(0, 60, 30, 0.8);
+            border: 1px solid rgba(140, 255, 0, 0.3);
+            border-radius: 50px;
+            cursor: pointer;
+            color: #aaff66;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, rgba(140, 255, 0, 0.3), transparent);
+            animation: rotate 4s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #fff;
+            border-color: rgba(140, 255, 0, 0.6);
+            box-shadow: 0 0 15px rgba(140, 255, 0, 0.3);
+        }
+
+        .nav-item:hover::before, .nav-item.active::before {
+            opacity: 1;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .main-content {
+            height: 100vh;
+            padding: 100px 5% 50px 5%; 
+            overflow-y: auto;
+            z-index: 5;
+            position: relative;
+            animation: basePageLoadFade 1s ease-out forwards;
+        }
+
+        .home-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            width: 100%;
+            max-width: 1600px;
+            flex-wrap: wrap;
+            z-index: 6;
+        }
+
+        .logo-visual {
+            width: 350px; 
+            height: 350px; 
+            filter: drop-shadow(0 0 15px rgba(140, 255, 0, 0.4));
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+
+        .logo-visual:hover { transform: scale(1.1); filter: drop-shadow(0 0 30px rgba(165, 255, 0, 0.7)); }
+
+        .home-text-block { flex: 1; min-width: 350px; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .hero-title { font-size: 40px; color: #99ff33; font-weight: 700; }
+        .hero-subtitle { font-size: 35px; color: #ccff99; margin-top: 10px; }
+        
+        .site-info-block { font-size: 14px; color: #aaff66; margin-top: 30px; line-height: 1.8; }
+        .site-info-block a { color: #99ff33; text-decoration: underline; transition: color 0.3s ease; }
+        .site-info-block a:hover { color: #fff; }
+
+        .content-section { display: none; animation: fadeIn 0.5s ease; position: relative; z-index: 6; }
+        .content-section.active { display: block; }
+
+        .info-box {
+            max-width: 900px;
+            background: rgba(0, 40, 20, 0.85);
+            padding: 40px;
+            border-radius: 4px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(140, 255, 0, 0.3);
+            margin: 20px auto;
+            animation: boxFireGlow 6s ease-in-out infinite;
+        }
+
+        @keyframes boxFireGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(140, 255, 0, 0.15); }
+            50% { box-shadow: 0 0 35px rgba(140, 255, 0, 0.3); border-color: rgba(140, 255, 0, 0.5); }
+        }
+
+        .info-box h3 { color: #ccff99; margin-bottom: 20px; font-size: 28px; border-bottom: 1px solid #99ff33; display: inline-block; padding-bottom: 5px; }
+        .info-box h4 { color: #aaff66; margin: 25px 0 10px 0; font-size: 22px; }
+        .info-box p, .info-box li { font-size: 18px; color: #d9ffec; margin-bottom: 12px; }
+
+        .important-note { background: rgba(140, 255, 0, 0.1); padding: 15px; border-left: 4px solid #99ff33; margin-bottom: 25px; }
+        .rule-label { color: #99ff33; font-weight: bold; }
+        .exception-label { color: #ccff99; font-weight: bold; font-style: italic; }
+        
+        .staff-list { font-size: 20px; color: #d9ffec; line-height: 2.2; }
+        
+        .role { color: #99ff33; font-weight: bold; }
+        .divider { border: none; border-top: 1px solid rgba(140, 255, 0, 0.3); margin: 15px 0; }
+
+        @keyframes basePageLoadFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .main-content::-webkit-scrollbar { width: 8px; }
+        .main-content::-webkit-scrollbar-track { background: rgba(0, 40, 20, 0.3); }
+        .main-content::-webkit-scrollbar-thumb { background: #99ff33; border-radius: 4px; }
+
+        .copyable { cursor: pointer; color: #d9ffec; transition: color 0.2s; }
+        .copyable:hover { color: #99ff33; }
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #99ff33; color: black; padding: 12px 24px; border-radius: 5px;
+            opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s; z-index: 10001;
+        }
+        #toast.show { opacity: 1; visibility: visible; }
+
+        .burger-menu {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            cursor: pointer;
+            font-size: 30px;
+            color: #99ff33;
+            background: rgba(0, 40, 20, 0.8);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .burger-menu { display: block; }
+            .nav-container { 
+                display: none; 
+                flex-direction: column; 
+                top: 70px; 
+                left: 20px; 
+                transform: none; 
+                background: rgba(0, 20, 10, 0.95);
+                padding: 10px;
+                border-radius: 10px;
+                width: 200px;
+            }
+            .nav-container.active { display: flex; }
+            .nav-item { width: 100%; margin-bottom: 5px; }
+            .main-content { padding-top: 80px; }
+            .logo-visual { pointer-events: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Текст скопирован в буфер обмена</div>
+    <canvas id="effect-canvas"></canvas>
+
+    <div class="burger-menu" onclick="toggleNav()">☰</div>
+
+    <div class="nav-container" id="nav-menu">
+        <div class="nav-item" onclick="showSection('home')" id="menu-home">Меню</div>
+        <div class="nav-item" onclick="showSection('info')" id="menu-info">Информация</div>
+        <div class="nav-item" onclick="showSection('staff')" id="menu-staff">Состав</div>
+        <div class="nav-item" onclick="showSection('rules')" id="menu-rules">Правила</div>
+        <div class="nav-item" onclick="showSection('workzones')" id="menu-workzones">Рабочие зоны</div>
+    </div>
+
+    <div class="main-content">
+        <canvas id="bg-canvas"></canvas>
+        
+        <div id="home" class="content-section active">
+            <div class="home-container">
+                <div class="home-text-block">
+                    <h1 class="hero-title">ОРДЕН ПЫЛАЮЩЕЙ РОЗЫ</h1>
+                    <h2 class="hero-subtitle">Экономический Отдел</h2>
+                    <div class="site-info-block">
+                        <p>Владелец сайта: "diteryx".</p>
+                        <p>Сайт был опубликован: 18.06.2026.</p>
+                        <p>Дизайн был взят с <a href="https://sites.google.com/view/ordenflamingrose/%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F-%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0" target="_blank">данного сайта</a>.</p>
+                    </div>
+                </div>
+                <img src="https://imgur.com/CXlMgQK.png" alt="Logo" class="logo-visual" draggable="false">
+            </div>
+        </div>
+
+        <div id="info" class="content-section">
+            <div class="info-box">
+                <h3>Информация об отделе</h3>
+                <p><span style="color: #99ff33; font-weight: bold;">Экономический отдел</span> — это подразделение, отвечающее за все экономические вопросы Ордена.</p>
+                <p><strong>Какими видами работ они занимаються:</strong></p>
+                <ul>
+                    <li>Пополнение магазина;</li>
+                    <li>Сортировка хранилища;</li>
+                    <li>Слежка за складом;</li>
+                    <li>Управление ресурсами.</li>
+                </ul>
+                <p>У экономистов будет <span style="color: #99ff33; font-weight: bold;">3 отчёта</span>. Каждую неделю заслуги отсылаются выше. По решению Магистра выдается награда или наказание.</p>
+            </div>
+        </div>
+
+        <div id="staff" class="content-section">
+            <div class="info-box">
+                <h3>Состав отдела</h3>
+                <div class="staff-list">
+                    <p><span class="role">Глава отдела</span> - KATAR1S</p>
+                    <div class="divider"></div>
+                    <p><span class="role">Заместитель отдела</span> - dantez7892</p>
+                    <p><span class="role">Заместитель отдела</span> - YIBEIYHRE</p>
+                    <div class="divider"></div>
+                    <p>
+                        <span class="role">Экономист</span> - grenchik499<br>
+                        <span class="role">Экономист</span> - Dowuk5305<br>
+                        <span class="role">Экономист</span> - R4kuten
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="rules" class="content-section">
+            <div class="info-box">
+                <h3>Регламент Экономического Отдела</h3>
+                
+                <h4>1. Пополнение магазина и управление ресурсами</h4>
+                <p>Экономический отдел отвечает за стабильный ассортимент и финансовое благополучие Ордена. Каждый выставленный на продажу товар должен приносить максимальную пользу.</p>
+                <ul>
+                    <li><span class="rule-label">Правило:</span> Запрещено выставлять товары в магазин по произвольным ценам или забирать выручку без ведома руководства. Все цены на дефицитные и базовые ресурсы должны строго координироваться по экономическим правилам каждого сервера где находиться Орден.</li>
+                    <li><span class="rule-label">Порядок действий:</span> Перед масштабным обновлением ассортимента или изменением цен согласуйте прайс-лист с Главой экономического отдела или его Заместителем.</li>
+                </ul>
+
+                <h4>2. Сортировка хранилища и слежка за складом</h4>
+                <p>Склад экономического отдела — это сердце логистики Ордена. Идеальный порядок в сундуках экономит время каждого участника.</p>
+                <p><span class="rule-label">Запрещено:</span> Оставлять ресурсы в нерелевантных зонах, перемешивать категории товаров или забивать сундуки «мусором».</p>
+
+                <h4>3. Сдача отчётности</h4>
+                <p>Прозрачность работы — залог справедливой оценки ваших заслуг Магистром. На основе ваших данных формируется система поощрений. В каждом из магазинов фракции обязана быть книга отчетности по продажам.</p>
+            </div>
+        </div>
+
+        <div id="workzones" class="content-section">
+            <div class="info-box">
+                <h3>Рабочие зоны</h3>
+                <ul>
+                    <li>Хранилище Ордена - x:5025, z:-269 [МП]</li>
+                    <li>Магазин Ордена - x:163, z:4 [МП]</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="farms" class="content-section">
+            <div class="info-box">
+                <hr style="border: 0; border-top: 1px solid #99ff33; margin: 30px 0;">
+                <p style="color: #99ff33; font-weight: bold; text-align: center;">ВСЕ ФЕРМЫ НАХОДЯТЬСЯ В МФ!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleNav() {
+            document.getElementById('nav-menu').classList.toggle('active');
+        }
+
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => section.classList.remove('active'));
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) targetSection.classList.add('active');
+            
+            const menuItems = document.querySelectorAll('.nav-item');
+            menuItems.forEach(item => item.classList.remove('active'));
+            const targetMenuItem = document.getElementById('menu-' + sectionId);
+            if (targetMenuItem) targetMenuItem.classList.add('active');
+            
+            if (window.innerWidth <= 768) {
+                document.querySelector('.main-content').scrollTop = 0;
+                document.getElementById('nav-menu').classList.remove('active');
+            }
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        const clickCanvas = document.getElementById('effect-canvas');
+        const clickCtx = clickCanvas.getContext('2d');
+        let ringsArray = [];
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particlesArray = [];
+        let audioCtx = null;
+
+        function playMechanicalClickSound() {
+            try {
+                if (!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContext();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const mainGain = audioCtx.createGain();
+                osc.type = 'triangle'; 
+                osc.frequency.setValueAtTime(150, now); 
+                osc.frequency.exponentialRampToValueAtTime(90, now + 0.045);
+                mainGain.gain.setValueAtTime(0.7, now); 
+                mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+                const lpFilter = audioCtx.createBiquadFilter();
+                lpFilter.type = 'lowpass';
+                lpFilter.frequency.value = 1200; 
+                osc.connect(lpFilter);
+                lpFilter.connect(mainGain);
+                mainGain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 0.045);
+            } catch (e) { }
+        }
+
+        function resizeCanvases() {
+            clickCanvas.width = window.innerWidth;
+            clickCanvas.height = window.innerHeight;
+            const mainContent = document.querySelector('.main-content');
+            bgCanvas.width = mainContent.clientWidth;
+            bgCanvas.height = mainContent.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvases);
+        setTimeout(resizeCanvases, 100);
+
+        class ClickRing {
+            constructor(x, y) { this.x = x; this.y = y; this.radius = 2; this.maxRadius = 45; this.alpha = 1; this.speed = 1.8; }
+            update() { this.radius += this.speed; this.alpha = 1 - (this.radius / this.maxRadius); }
+            draw() {
+                if (this.alpha <= 0) return;
+                clickCtx.save();
+                clickCtx.globalAlpha = this.alpha;
+                clickCtx.beginPath();
+                clickCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                clickCtx.lineWidth = 2;
+                clickCtx.strokeStyle = 'rgba(140, 255, 0, 0.9)';
+                clickCtx.shadowBlur = 12;
+                clickCtx.shadowColor = 'rgba(140, 255, 0, 1)';
+                clickCtx.stroke();
+                clickCtx.restore();
+            }
+        }
+
+        class BgParticle {
+            constructor() { this.reset(); this.y = Math.random() * bgCanvas.height; }
+            reset() { this.x = Math.random() * bgCanvas.width; this.y = -10; this.size = Math.random() * 2.8 + 0.4; this.speedY = (this.size * 0.3) + Math.random() * 0.4 + 0.2; this.speedX = (Math.random() - 0.5) * 0.4; this.alpha = Math.random() * 0.6 + 0.15; }
+            update() { this.y += this.speedY; this.x += this.speedX; if (this.y > bgCanvas.height || this.x < 0 || this.x > bgCanvas.width) this.reset(); }
+            draw() {
+                bgCtx.save();
+                bgCtx.globalAlpha = this.alpha;
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                bgCtx.fillStyle = '#aaff66';
+                bgCtx.shadowBlur = this.size * 2.5;
+                bgCtx.shadowColor = '#99ff33';
+                bgCtx.fill();
+                bgCtx.restore();
+            }
+        }
+
+        function initBgParticles() {
+            particlesArray = [];
+            const particleCount = Math.min(180, Math.floor(window.innerWidth / 10));
+            for (let i = 0; i < particleCount; i++) particlesArray.push(new BgParticle());
+        }
+        
+        window.addEventListener('load', () => { resizeCanvases(); initBgParticles(); });
+        
+        window.addEventListener('click', function(event) {
+            ringsArray.push(new ClickRing(event.clientX, event.clientY));
+            playMechanicalClickSound();
+        });
+
+        function animate() {
+            clickCtx.clearRect(0, 0, clickCanvas.width, clickCanvas.height);
+            for (let i = 0; i < ringsArray.length; i++) {
+                ringsArray[i].update();
+                ringsArray[i].draw();
+                if (ringsArray[i].radius >= ringsArray[i].maxRadius) { ringsArray.splice(i, 1); i--; }
+            }
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            if (particlesArray.length === 0 && bgCanvas.width > 0) initBgParticles();
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
